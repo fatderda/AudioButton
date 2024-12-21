@@ -1,3 +1,4 @@
 boot_out.txt
 settings.toml
-/.vs/AudioButton/FileContentIndex/34c044b9-097d-4ee4-91e8-0ac31035fce2.vsidx
+*.vsidx
+.vs/*
