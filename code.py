@@ -8,7 +8,7 @@ from adafruit_hid.consumer_control_code import ConsumerControlCode
 from adafruit_hid.keyboard import Keyboard
 from adafruit_hid.keycode import Keycode
 
-# init Keyboard
+# Initialize Keyboard
 kbd = Keyboard(usb_hid.devices)
 
 # Rotary encoder
@@ -25,11 +25,11 @@ consumer = ConsumerControl(usb_hid.devices)
 dl = 0.2
 
 # long press
-longPressDelay = 0.5
+longPressDelay = 1
 encSwReleased = True
 
-# next previous controls and delay
-pressInterval = 0.3
+#next previous controls and delay
+pressInterval = 0.6
 pressedCount = 0
 firstPressTime = None
 
@@ -39,9 +39,9 @@ while True:
     position = enc.position
     if position != lastPosition: 
         if lastPosition < position:
-            consumer.send(ConsumerControlCode.VOLUME_INCREMENT)
+            consumer.send(ConsumerControlCode.VOLUME_INCREMENT) 
         else:
-            consumer.send(ConsumerControlCode.VOLUME_DECREMENT)
+            consumer.send(ConsumerControlCode.VOLUME_DECREMENT) 
         lastPosition = position 
     
     # poll encoder button
@@ -55,34 +55,37 @@ while True:
             if pressedCount == 1:
                 firstPressTime = currentTime
             
-            longPressHandled = False
-
-            # check long press
-            if not longPressHandled and pressedCount == 1 and currentTime - firstPressTime >= longPressDelay:
-                # send WIN and 7 to open Spotify (or whatever app is at this position in taskbar)
-                kbd.press(Keycode.WINDOWS) 
-                kbd.press(Keycode.SEVEN) 
-                kbd.release(Keycode.WINDOWS)
-                kbd.release(Keycode.SEVEN)
-                print("long press");
-                longPressHandled = True   
-                pressedCount = 0
+        print("pressedCount: " + str(pressedCount));
+        
+        # Check for long press
+        if pressedCount == 1 and currentTime - firstPressTime >= longPressDelay:
+            # send WIN and 7 to open Spotify
+            kbd.press(Keycode.WINDOWS) 
+            kbd.press(Keycode.SEVEN) 
+            kbd.release(Keycode.WINDOWS)
+            kbd.release(Keycode.SEVEN)
+            print("long press");  
+            pressedCount = 0
     else:
         encSwReleased = True
         
-    # handle multipress 
-    if pressedCount > 0 and firstPressTime is not None:
-        elapsedTime = currentTime - firstPressTime
-        if elapsedTime > pressInterval:
-            if pressedCount == 1: 
-                consumer.send(ConsumerControlCode.PLAY_PAUSE)
-                print("single press - play/pause")
-            elif pressedCount == 2: 
-                consumer.send(ConsumerControlCode.SCAN_NEXT_TRACK)
-                print("double press - next")
-            elif pressedCount == 3: 
-                consumer.send(ConsumerControlCode.SCAN_PREVIOUS_TRACK)
-                print("triple press - previous")
-            pressedCount = 0  
-            firstPressTime = None
+        # Handle multi-press detection
+        if pressedCount > 0 and firstPressTime is not None:
+            elapsedTime = currentTime - firstPressTime
+            if elapsedTime > pressInterval:
+                if pressedCount == 1:
+                    # Single press - Play/Pause
+                    consumer.send(ConsumerControlCode.PLAY_PAUSE)
+                    print("single press")
+                elif pressedCount == 2:
+                    # Double press - Skip song
+                    consumer.send(ConsumerControlCode.SCAN_NEXT_TRACK)
+                    print("double press")
+                elif pressedCount == 3:
+                    # Triple press - Previous song
+                    consumer.send(ConsumerControlCode.SCAN_PREVIOUS_TRACK)
+                    print("triple press")
+                pressedCount = 0  # Reset press count
+                firstPressTime = None
+                print("pressed reset")
     time.sleep(0.1)
